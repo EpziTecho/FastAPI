@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -31,59 +31,57 @@ users_list = [User(id=1,name="Sergio", surname="Huayllas", url="https://www.link
 @app.get("/users")
 async def users():
     return users_list
-#path
+
+# path
 @app.get("/user/{user_id}")
 async def user(user_id: int):
-    # users = filter(lambda user:user.id == user_id, users_list)
-    # try:
-    #     return list(users)[0]
-    # except:
-    #     return {"message":"Usuario no encontrado"}
-    return search_user(user_id)
-#query
+    user = search_user(user_id)
+    if user:
+        return user
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+# query
 @app.get("/user/")
 async def user(id: int):
-    # users = filter(lambda user:user.id == id, users_list)
-    # try:
-    #     return list(users)[0]
-    # except:
-    #     return {"message":"Usuario no encontrado"}
-    return search_user(id)
+    user = search_user(id)
+    if user:
+        return user
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-@app.post("/user/")
-async def user(user: User):
-
-    if type(search_user(user.id)) == User:
-        return {"message":"Usuario ya existe"}
+@app.post("/user/",response_model=User, status_code=201)
+async def create_user(user: User):
+    existing_user = search_user(user.id)
+    if existing_user:
+        raise HTTPException(status_code=404, detail="Usuario ya existe")
     else:
         users_list.append(user)
         return user
 
-
 @app.put("/user/")
-async def user(user:User):
+async def update_user(user: User):
     found = False
     for index, saved_user in enumerate(users_list):
-        if saved_user.id == user.id: 
+        if saved_user.id == user.id:
             users_list[index] = user
             found = True
-    
     if not found:
-        return {"message":"No se actualizo el usuario"}
-            
+        raise HTTPException(status_code=404, detail="No se actualizó el usuario")
     else:
         return user
 
 @app.delete("/user/{id}")
-async def user(id:int):
+async def delete_user(id: int):
     found = False
     for index, saved_user in enumerate(users_list):
         if saved_user.id == id:
             del users_list[index]
             found = True
-
     if not found:
-        return {"message":"No se elimino el usuario"}
+        raise HTTPException(status_code=404, detail="No se eliminó el usuario")
+    else:
+        return {"message": "Usuario eliminado exitosamente"}
 
             
                       
