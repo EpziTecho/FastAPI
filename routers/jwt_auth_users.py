@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
@@ -11,7 +11,7 @@ ACCESS_TOKEN_EXPIRE_DURATION = 1  # Duración del token de acceso en minutos
 SECRET_KEY = "fb6fc7c074d19811ef7ee8901eddff6dea4645eb918b9c3c0aa91ae5df7b0801"
 
 # Creación de la aplicación FastAPI
-app = FastAPI()
+router = APIRouter()
 
 # Configuración de seguridad con OAuth2
 oauth2 = OAuth2PasswordBearer(tokenUrl="/login")
@@ -89,7 +89,7 @@ async def current_user(user: User = Depends(auth_user)):
     return user
 
 # Ruta para manejar el endpoint de login y emitir tokens de acceso
-@app.post("/login")
+@router.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     # Verificar si el usuario existe en la base de datos simulada
     user_db = users_db.get(form.username)
@@ -122,6 +122,6 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": jwt.encode(access_token, SECRET_KEY, algorithm=ALGORITHM), "token_type": "bearer"}
 
 # Ruta protegida que devuelve la información del usuario actual
-@app.get("/users/me")
+@router.get("/users/me")
 async def me(user: User = Depends(current_user)):
     return user
